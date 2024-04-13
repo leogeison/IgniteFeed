@@ -4,41 +4,56 @@ import { ptBR } from 'date-fns/locale/pt-BR';
 import { Avatar } from './Avatar';
 import { Comment } from './Comment';
 import styles from './Post.module.css';
-import { useState } from 'react';
+import { ChangeEvent, FormEvent, InvalidEvent, useState } from 'react';
+interface Content {
+  type: 'paragraph' | 'link';
+  content: string;
+}
 
-export function Post({ author, publishedAt, content }: ) {
+export interface PostType {
+  id: number
+  author: { name: string; role: string; avatarUrl: string };
+  publishedAt: Date;
+  content: Content[];
+}
+
+interface PostProps {
+  post: PostType;
+}
+
+export function Post({ post }: PostProps) {
   const [comments, setComments] = useState(['Post muito bacana, hein?!']);
 
   const [newCommentText, setNewComentText] = useState('');
 
   const publishedDateFormatted = format(
-    publishedAt,
+    post.publishedAt,
     "d 'de' LLLL 'às' HH:mm'h'",
     { locale: ptBR }
   );
 
-  const publishedDateRelativetoNow = formatDistanceToNow(publishedAt, {
+  const publishedDateRelativetoNow = formatDistanceToNow(post.publishedAt, {
     locale: ptBR,
     addSuffix: true
   });
 
-  function handleCreateNewComment() {
+  function handleCreateNewComment(event: FormEvent) {
     event.preventDefault();
 
     setComments([...comments, newCommentText]);
     setNewComentText('');
   }
 
-  function handleNewCommentChange() {
+  function handleNewCommentChange(event: ChangeEvent<HTMLTextAreaElement>) {
     event.target.setCustomValidity('');
     setNewComentText(event.target.value);
   }
 
-  function handleNewCommentInvalid() {
+  function handleNewCommentInvalid(event: InvalidEvent<HTMLTextAreaElement>) {
     event.target.setCustomValidity('Esse campo é obrigatorio');
   }
 
-  function deleteComment(comentToDelete) {
+  function deleteComment(comentToDelete: string) {
     const comentsWithoutDeleteOne = comments.filter(coment => {
       return coment !== comentToDelete;
     });
@@ -49,22 +64,22 @@ export function Post({ author, publishedAt, content }: ) {
     <article className={styles.post}>
       <header>
         <div className={styles.author}>
-          <Avatar hasBorder src={author.avatarUrl} />
+          <Avatar hasBorder src={post.author.avatarUrl} />
           <div className={styles.authorInfo}>
-            <strong>{author.name}</strong>
-            <span>{author.role}</span>
+            <strong>{post.author.name}</strong>
+            <span>{post.author.role}</span>
           </div>
         </div>
         <time
           title={publishedDateFormatted}
-          dateTime={publishedAt.toISOString()}
+          dateTime={post.publishedAt.toISOString()}
         >
           {publishedDateRelativetoNow}
         </time>
       </header>
 
       <div className={styles.content}>
-        {content.map(line => {
+        {post.content.map(line => {
           if (line.type === 'paragraph') {
             return <p key={line.content}>{line.content}</p>;
           } else if (line.type === 'link') {
